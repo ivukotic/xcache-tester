@@ -7,7 +7,7 @@ cd ds
 # create files
 for i in {1..288}
 do
-    dd if=/dev/zero of=output.dat  bs=1M  count=1
+    dd if=/dev/zero of=xc_test_{$1}_{$i}.dat  bs=1M  count=1
 done
 
 # upload to rucio

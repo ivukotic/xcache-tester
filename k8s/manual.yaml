@@ -44,6 +44,8 @@ spec:
               mountPath: /etc/grid-certs/
             - name: grid-secret
               mountPath: /etc/grid-certs-ro/
+            - name: rucio-cfg
+              mountPath: /opt/rucio/etc/
       volumes:
         # Mount the usercert, userkey, and passphrase file. These will have the
         # wrong permissions to be used for generating the voms proxy
@@ -52,3 +54,6 @@ spec:
             secretName: grid-certs-secret
         - name: grid-certs-rw-copy
           emptyDir: {}
+        - name: rucio-cfg
+          configMap:
+            name: rucio-config
