@@ -1,4 +1,4 @@
-FROM sslhep/rucio-client
+FROM sslhep/rucio-client:main
 
 
 COPY *.sh .

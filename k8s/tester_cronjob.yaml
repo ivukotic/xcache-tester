@@ -1,0 +1,21 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: xcache-tester
+spec:
+  # at 04:05
+  schedule: "5 4 * * *"
+  concurrencyPolicy: "Forbid"
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            app: xcache-tester
+        spec:
+          containers:
+            - name: xcache-tester
+              image: ivukotic/xcache-tester
+              imagePullPolicy: Always
+
+          restartPolicy: OnFailure
