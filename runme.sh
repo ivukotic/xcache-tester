@@ -3,7 +3,7 @@
 voms-proxy-init --pwstdin -key /etc/grid-certs/userkey.pem \
                   -cert /etc/grid-certs/usercert.pem \
                   --voms=atlas \
-                  <  /etc/grid-certs/passphrase
+                  <  /etc/grid-certs-ro/passphrase
 
 voms-proxy-info
 
