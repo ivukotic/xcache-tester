@@ -1,6 +1,6 @@
 FROM sslhep/rucio-client:main
 
 
-COPY *.sh .
+COPY *.sh ./
 
 CMD [ "runme.sh" ]
