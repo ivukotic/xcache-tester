@@ -1,0 +1,19 @@
+name: tests
+on:
+  push:
+    branches:
+      - "*"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    name: build
+    steps:
+      - uses: actions/checkout@master
+      - name: Build Docker Image
+        uses: elgohr/Publish-Docker-Github-Action@v5
+        with:
+          name: ivukotic/xcache-tester:latest
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
