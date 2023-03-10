@@ -6,7 +6,7 @@ data:
     auth_host = https://voatlasrucio-auth-prod.cern.ch:443
     auth_type = x509_proxy
     ca_cert = /etc/pki/tls/certs/ca-bundle.crt
-    account = xcache
+    account = ivukotic
     client_x509_proxy = $X509_USER_PROXY
     request_retries = 3
 
