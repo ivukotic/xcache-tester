@@ -11,3 +11,6 @@ do
 done
 
 # upload to rucio
+rucio upload --scope tests --name xc_test_{$1} --rse MWT2_UC_SCRATCHDISK *
+
+echo 'done'

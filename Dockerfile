@@ -1,6 +1,6 @@
 FROM sslhep/rucio-client:main
 
-RUN yum install -y jq
+RUN yum install -y jq xrootd-client
 
 ENV X509_CERT_DIR /etc/grid-security/certificates
 
