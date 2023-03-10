@@ -7,10 +7,11 @@ cd ds
 # create files
 for i in {1..288}
 do
-    dd if=/dev/zero of=xc_test_{$1}_{$i}.dat  bs=1M  count=1
+    dd if=/dev/zero of=xc_test_$1_$i.dat  bs=1M  count=1
 done
 
+cd ..
 # upload to rucio
-rucio upload --scope tests --name xc_test_{$1} --rse MWT2_UC_SCRATCHDISK *
+rucio upload --scope tests --name xc_test_$1 --rse MWT2_UC_SCRATCHDISK ds
 
 echo 'done'
