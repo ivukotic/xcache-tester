@@ -12,6 +12,6 @@ done
 
 cd ..
 # upload to rucio
-rucio upload --scope tests --name xc_test_$1 --rse MWT2_UC_SCRATCHDISK ds
+rucio upload --scope user.ivukotic --name xc_test_$1 --rse MWT2_UC_SCRATCHDISK ds
 
 echo 'done'
