@@ -11,10 +11,25 @@ fp=$(rucio list-file-replicas $ds --protocol root | grep xcache_${dat}_${2}.dat 
 echo "to read $fp"
 
 while read serv; do
+    # skip local addresses.
+    if [[ $serv = 10.* ]]; then 
+        continue
+    fi
     echo "testing $serv"
     # xrdcp with timeout
-    cmd="xrdcp -f root://$serv//$fp /dev/null"
+    cmd="xrdcp -f -s root://$serv//$fp /dev/null"
     echo $cmd
     timeout 30 $cmd
+
+    if [ $? -ne 0 ]; then
+        echo "issue with server: ${serv}. ret. code: $?"
+        
+        curl -X POST https://aaas.atlas-ml.org/alarm \
+        -H 'Content-Type: application/json' \
+        -d '{ "category" : "Virtual Placement", "subcategory": "XCache", "event": "external test", "tag":"'$serv'", "source": {"server_ip":"'$serv'"}}'
+    fi
+
 done <ips.txt
 
+echo '====================================================='
+echo 'series done.'
