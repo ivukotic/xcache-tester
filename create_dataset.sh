@@ -5,7 +5,7 @@ mkdir ds
 cd ds
 
 # create files
-for i in {1..288}
+for i in {1..2}
 do
     dd if=/dev/zero of=xc_test_$1_$i.dat  bs=1M  count=1
 done
