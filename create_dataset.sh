@@ -11,7 +11,7 @@ ds=user.ivukotic:user.ivukotic.xcache_$dat
 rucio add-dataset --lifetime 86400 $ds
 
 # create files
-for i in {1..2}
+for i in {1..288}
 do
     fn=xcache_$1_$i.dat
     echo 'creating file: $fn'

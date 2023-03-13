@@ -17,5 +17,6 @@ spec:
             - name: xcache-tester
               image: ivukotic/xcache-tester
               imagePullPolicy: Always
+              command: ["./runme.sh"]
 
           restartPolicy: OnFailure
