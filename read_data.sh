@@ -20,9 +20,10 @@ while read serv; do
     cmd="xrdcp -f -s root://$serv//$fp /dev/null"
     echo $cmd
     timeout 30 $cmd
+    rc=$?
 
-    if [ $? -ne 0 ]; then
-        echo "issue with server: ${serv}. ret. code: $?"
+    if [ $rc -ne 0 ]; then
+        echo "issue with server: ${serv}. ret. code: $rc"
         
         curl -X POST https://aaas.atlas-ml.org/alarm \
         -H 'Content-Type: application/json' \
