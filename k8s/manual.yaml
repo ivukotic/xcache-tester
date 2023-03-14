@@ -33,12 +33,6 @@ spec:
           imagePullPolicy: Always
           command: ["sleep"]
           args: ["infinity"]
-          # env:
-          #   - name: LOGSTASH_PWD
-          #     valueFrom:
-          #       secretKeyRef:
-          #         name: logstash-pwd
-          #         key: password
           volumeMounts:
             - name: grid-certs-rw-copy
               mountPath: /etc/grid-certs/
