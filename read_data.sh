@@ -27,7 +27,7 @@ while read serv; do
         
         curl -X POST https://aaas.atlas-ml.org/alarm \
         -H 'Content-Type: application/json' \
-        -d '{ "category" : "Virtual Placement", "subcategory": "XCache", "event": "external test", "tag":"'$serv'", "source": {"server_ip":"'$serv'"}}'
+        -d '{ "category" : "Virtual Placement", "subcategory": "XCache", "event": "external test", "body": "error code: '$rc' ", "tags":"'$serv'", "source": {"server_ip":"'$serv'"}}'
     fi
 
 done <ips.txt
