@@ -17,3 +17,12 @@ jobs:
           name: ivukotic/xcache-tester:latest
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Repository Dispatch
+        uses: peter-evans/repository-dispatch@v1
+        with:
+          token: ${{ secrets.AAAS_GITOPS_DEPLOY_TRIGGER }}
+          repository: maniaclab/river_apps
+          event-type: gitops-uc-ls-xcache-tester-trigger
+          client-payload: '{"ref": "${{ github.ref }}", "sha": "${{ github.sha }}"}'
+  
