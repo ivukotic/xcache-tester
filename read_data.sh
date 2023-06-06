@@ -15,7 +15,7 @@ while read serv; do
     if [[ $serv = 10.* ]]; then 
         continue
     fi
-    echo "testing $serv"
+    echo "\ntesting $serv"
     # xrdcp with timeout
     cmd="xrdcp -f -s root://$serv//$fp /dev/null"
     echo $cmd
@@ -25,7 +25,7 @@ while read serv; do
     if [ $rc -ne 0 ]; then
         echo "issue with server: ${serv}. ret. code: $rc"
         
-        curl -X POST https://aaas.atlas-ml.org/alarm \
+        curl -s -X POST https://aaas.atlas-ml.org/alarm \
         -H 'Content-Type: application/json' \
         -d '{ "category" : "Virtual Placement", "subcategory": "XCache", "event": "external test", "body": "error code: '$rc' ", "tags":"'$serv'", "source": {"server_ip":"'$serv'"}}'
     fi
