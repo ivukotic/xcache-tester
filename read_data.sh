@@ -15,7 +15,11 @@ while read serv; do
     if [[ $serv = 10.* ]]; then 
         continue
     fi
-    echo "\ntesting $serv"
+    # skip OX non VP server.
+    if [[ $serv = 163.1.5.200 ]]; then 
+        continue
+    fi
+    echo "testing $serv"
     # xrdcp with timeout
     cmd="xrdcp -f -s root://$serv//$fp /dev/null"
     echo $cmd
