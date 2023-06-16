@@ -12,7 +12,7 @@ voms-proxy-info
 
 export X509_USER_PROXY=/tmp/x509up_u0
 
-python3.9 xcache-traces.py
+python3.6 xcache-traces.py
 rc=$?; if [[ $rc != 0 ]]; then 
     echo "problem checking rucio traces. Exiting."
     exit $rc
