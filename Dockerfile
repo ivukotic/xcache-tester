@@ -7,11 +7,11 @@ RUN yum update -y && yum install -y jq xrootd-client python3-gfal2 gfal2-all gfa
 RUN yum install -y cmake gcc gcc-c++ zlib-devel python3-devel libuuid-devel openssl-devel sudo
 
 RUN python3 -m pip install --upgrade argcomplete rucio-clients 
-RUN pip3.9 install wheel
+RUN pip3.6 install wheel xrootd elasticsearch
 
 
 # RUN pip3.9 install xrootd
-RUN pip3.9 install elasticsearch
+# RUN pip3. install elasticsearch
 
 COPY xcache-traces.py ./
 ENV X509_CERT_DIR /etc/grid-security/certificates
