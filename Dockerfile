@@ -17,6 +17,7 @@ RUN pip3.6 install elasticsearch
 # RUN pip3. install elasticsearch
 
 COPY xcache-traces.py ./
+COPY xcache-tester.py ./
 ENV X509_CERT_DIR /etc/grid-security/certificates
 
 COPY *.sh ./
