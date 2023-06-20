@@ -62,6 +62,8 @@ def stater(i, q, r):
         fileID = doc['fileID']
         c, o, p = splitURL(doc['url'])
         print(f'thr:{i}, <{fileID}>, checking cache {c} origin {o} for {p}')
+
+        # stating origin
         myclient = client.FileSystem(o)
         try:
             myclient = client.FileSystem(o)
@@ -79,6 +81,7 @@ def stater(i, q, r):
             r.put(doc, block=True, timeout=0.1)
             continue
 
+        # opening and reading from origin
         try:
             with client.File() as f:
                 # print("opening:", o+p)
@@ -96,6 +99,13 @@ def stater(i, q, r):
             r.put(doc, block=True, timeout=0.1)
             continue
 
+        # if cache is only localy accessible just return
+        if c.startswith('root://10.'):
+            print('internal. skip.')
+            continue
+        if c.count('163.1.5.200'):
+            print('OX non VP. skip.')
+            continue
         try:
             with client.File() as f:
                 # print("opening through xcache:", c+'//'+o+p)
