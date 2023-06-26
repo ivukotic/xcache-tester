@@ -17,10 +17,4 @@ fd=$(date +'%Y-%m-%d')
 echo 'start reading'
 python3.6 xcache-tester.py
 
-# for i in {1..288}
-# do
-#     echo "Read attempt: $i"
-#     timeout 290 ./read_data.sh $i
-#     sleep 300  
-# done
-
+# to debug
