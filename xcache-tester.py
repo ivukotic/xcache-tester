@@ -17,6 +17,10 @@ import requests
 from multiprocessing import Process, Queue
 from XRootD import client
 
+import faulthandler
+import signal
+faulthandler.register(signal.SIGUSR1.value)
+
 nproc = 5
 procs = []
 results = 0
@@ -45,6 +49,7 @@ def stater(i, q, r):
             continue
         doc = q.get()
         if doc is None:
+            print('this thread done. breaking out')
             q.put(None)
             break
         # print(f'thr:{i}, checking {doc}')
@@ -53,7 +58,8 @@ def stater(i, q, r):
         o = op[:op.index('//', 10)]  # or 11?
         p = op[op.index('//', 10):]
 
-        # opening and reading through xcache
+        # print("opening and reading through xcache")
+
         try:
             with client.File() as f:
                 print(f'thr:{i}, {c}//{op}')
@@ -77,7 +83,7 @@ def checkOrigin(fp):
     o = fp[:fp.index('//', 10)]
     p = fp[fp.index('//', 10):]
 
-    # stating origin
+    print("stating origin")
 
     try:
         myclient = client.FileSystem(o)
@@ -90,16 +96,16 @@ def checkOrigin(fp):
     if not status.ok:
         return False
 
-    # opening and reading from origin
+    print("opening and reading from origin")
 
     try:
         with client.File() as f:
-            print("origin opening:", fp)
+            print("opening:", fp)
             ostatus, nothing = f.open(fp, timeout=5)
-            print(f'origin open: {ostatus}')
+            print(f'open: {ostatus}')
             if ostatus.ok:
                 rstatus, data = f.read(offset=0, size=1024, timeout=10)
-                print(f'origin read: {rstatus}')
+                print(f'read: {rstatus}')
     except Exception as e:
         print('issue reading file from origin.', e)
         return False
@@ -209,7 +215,7 @@ if __name__ == "__main__":
 
     q.put(None)
 
-    # waits for the queue to be fully processed (up to 10 min.)
+    print("wait for the queue to be fully processed (up to 10 min.)")
     for i in range(nproc):
         procs[i].join(600)
 
