@@ -49,7 +49,7 @@ def stater(i, q, r):
             continue
         doc = q.get()
         if doc is None:
-            print('this thread done. breaking out')
+            print('this thread done. breaking out', flush=True)
             q.put(None)
             break
         # print(f'thr:{i}, checking {doc}')
@@ -62,52 +62,52 @@ def stater(i, q, r):
 
         try:
             with client.File() as f:
-                print(f'thr:{i}, {c}//{op}')
+                print(f'thr:{i}, {c}//{op}', flush=True)
                 xostatus, nothing = f.open(c+'//'+o+p, timeout=5)
-                print(f'thr:{i} xopen: {xostatus}')
+                print(f'thr:{i} xopen: {xostatus}', flush=True)
                 addStatus(doc, 'xopen_', xostatus)
                 if xostatus.ok:
                     xrstatus, data = f.read(offset=0, size=1024, timeout=10)
-                    print(f'thr:{i} xread: {xrstatus}')
+                    print(f'thr:{i} xread: {xrstatus}', flush=True)
                     addStatus(doc, 'xread_', xrstatus)
         except Exception as e:
-            print('issue reading file from xcache.', e)
+            print('issue reading file from xcache.', e, flush=True)
 
         r.put(doc, block=True, timeout=0.1)
 
-    print(f'thr:{i} done.')
+    print(f'thr:{i} done.', flush=True)
 
 
 def checkOrigin(fp):
 
     o = fp[:fp.index('//', 10)]
     p = fp[fp.index('//', 10):]
-
-    print("stating origin")
+    print("---", datetime.datetime.now(), "---")
+    print("stating origin", flush=True)
 
     try:
         myclient = client.FileSystem(o)
         status, statInfo = myclient.stat(p, timeout=5)
-        print(f'origin stat:{status}')  # , statInfo)
+        print(f'origin stat:{status}', flush=True)  # , statInfo)
     except Exception as e:
-        print('issue stating file.', e)
+        print('issue stating file.', e, flush=True)
         return False
 
     if not status.ok:
         return False
 
-    print("opening and reading from origin")
+    print("opening and reading from origin", flush=True)
 
     try:
         with client.File() as f:
-            print("opening:", fp)
+            print("opening:", fp, flush=True)
             ostatus, nothing = f.open(fp, timeout=5)
-            print(f'open: {ostatus}')
+            print(f'open: {ostatus}', flush=True)
             if ostatus.ok:
                 rstatus, data = f.read(offset=0, size=1024, timeout=10)
-                print(f'read: {rstatus}')
+                print(f'read: {rstatus}', flush=True)
     except Exception as e:
-        print('issue reading file from origin.', e)
+        print('issue reading file from origin.', e, flush=True)
         return False
 
     if not ostatus.ok or not rstatus.ok:
@@ -117,30 +117,30 @@ def checkOrigin(fp):
 
 
 def simple_store(r):
-    print("storring results.")
+    print("storring results.", flush=True)
     allDocs = []
     while not r.empty():
         doc = r.get()
         doc['_index'] = "remote_io_retries"
         doc['timestamp'] = int(time.time()*1000)
         allDocs.append(doc)
-    print('received results:', len(allDocs))
+    print('received results:', len(allDocs), flush=True)
 
     try:
-        print('storing results in ES.')
+        print('storing results in ES.', flush=True)
         res = helpers.bulk(es, allDocs, raise_on_exception=True)
-        print("inserted:", res[0], '\tErrors:', res[1])
+        print("inserted:", res[0], '\tErrors:', res[1], flush=True)
     except es_exceptions.ConnectionError as e:
-        print('ConnectionError ', e)
+        print('ConnectionError ', e, flush=True)
     except es_exceptions.TransportError as e:
-        print('TransportError ', e)
+        print('TransportError ', e, flush=True)
     except helpers.BulkIndexError as e:
-        print(e[0])
+        print(e[0], flush=True)
         for i in e[1]:
-            print(i)
+            print(i, flush=True)
     except Exception as e:
-        print('Something seriously wrong happened.', e)
-    print('done storing.')
+        print('Something seriously wrong happened.', e, flush=True)
+    print('done storing.', flush=True)
 
 
 def get_active_xcaches():
@@ -152,10 +152,10 @@ def get_active_xcaches():
         for server in servers:
             # print(server)
             if server['address'].startswith('10.'):
-                print('internal. skip.')
+                print('internal. skip.', flush=True)
                 continue
             if server['address'] == '163.1.5.200':
-                print('OX non VP. skip.')
+                print('OX non VP. skip.', flush=True)
                 continue
             toTest.append(server)
     return toTest
@@ -194,7 +194,7 @@ if __name__ == "__main__":
 
         scope = 'user.ivukotic'
         name = 'xcache_' + cd + '_' + str(fi)+'.dat'
-        print('reading file:', scope, name)
+        print('reading file:', scope, name, flush=True)
 
         fps = list(rep_client.list_replicas(dids=[{'scope': scope, 'name': name}]))
         fp = list(fps[0]['pfns'].keys())[0]
@@ -215,13 +215,13 @@ if __name__ == "__main__":
 
     q.put(None)
 
-    print("wait for the queue to be fully processed (up to 10 min.)")
+    print("wait for the queue to be fully processed (up to 10 min.)", flush=True)
     for i in range(nproc):
         procs[i].join(600)
 
     simple_store(r)
 
-    print("Done testing.")
+    print("Done testing.", flush=True)
 
 # if len(tkids) > 0:
 #     ALARM = alarms('Analytics', 'Frontier', 'Bad SQL queries')

@@ -15,6 +15,8 @@ fd=$(date +'%Y-%m-%d')
 ./create_dataset.sh
 
 echo 'start reading'
+
+export PYTHONUNBUFFERED=TRUE
 python3.6 xcache-tester.py
 
 # to debug
