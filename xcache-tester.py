@@ -196,8 +196,12 @@ if __name__ == "__main__":
         name = 'xcache_' + cd + '_' + str(fi)+'.dat'
         print('reading file:', scope, name, flush=True)
 
-        fps = list(rep_client.list_replicas(dids=[{'scope': scope, 'name': name}]))
-        fp = list(fps[0]['pfns'].keys())[0]
+        try:
+            fps = list(rep_client.list_replicas(dids=[{'scope': scope, 'name': name}]))
+            fp = list(fps[0]['pfns'].keys())[0]
+        except Exception as e:
+            print("exception. bailing out", e)
+            sys.exit(24)
 
         origin_readable = checkOrigin(fp)
 
