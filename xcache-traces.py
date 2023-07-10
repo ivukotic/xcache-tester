@@ -230,7 +230,7 @@ if __name__ == "__main__":
 
     # creates processes that will do retries
     for i in range(nproc):
-        p = Process(target=stater, args=(i, q, r))
+        p = Process(target=stater, args=(i, q, r), daemon=True)
         p.start()
         procs.append(p)
 
