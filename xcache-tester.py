@@ -35,11 +35,9 @@ def addStatus(doc, step, status):
 
 def expunge(server):
     nfp = '/atlas/rucio/user/ivukotic/7d/9b/xcache.test.dat'
-    cp = subprocess.run(["xrdfs", server, "cache", "fevict", nfp], capture_output=True)
+    cp = subprocess.run(["xrdfs", server, "cache", "fevict", nfp])
     if cp.returncode:
         print('issue cleaning cached file for server:', server)
-        print('out:', cp.stdout)
-        print('err:', cp.stderr)
     return cp.returncode
 
 
