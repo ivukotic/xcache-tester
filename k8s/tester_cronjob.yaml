@@ -3,8 +3,8 @@ kind: CronJob
 metadata:
   name: xcache-tester
 spec:
-  # at 04:05
-  schedule: "5 4 * * *"
+  # every 5 min
+  schedule: "*/5 * * * *"
   concurrencyPolicy: "Forbid"
   jobTemplate:
     spec:
@@ -38,6 +38,8 @@ spec:
                   mountPath: /etc/grid-certs-ro/
                 - name: rucio-cfg
                   mountPath: /opt/rucio/etc/
+                - name: config
+                  mountPath: /config/
           volumes:
             # Mount the usercert, userkey, and passphrase file. These will have the
             # wrong permissions to be used for generating the voms proxy
@@ -49,4 +51,7 @@ spec:
             - name: rucio-cfg
               configMap:
                 name: rucio-config
+            - name: config
+              secret:
+                name: config
           restartPolicy: OnFailure

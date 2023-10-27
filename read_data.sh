@@ -4,11 +4,11 @@ dat=$(date +'%Y-%m-%d')
 # get all XCaches from VP
 curl -XGET https://vps.cern.ch/liveness | jq . | grep address | awk -F'"' {'print $4'} > ips.txt
 
-echo "using $dat and $1"
+echo $dat
 
-ds=user.ivukotic:user.ivukotic.xcache_$dat
+ds=user.ivukotic:xcache.test.dat
 # get from rucio path to the file
-fp=$(rucio list-file-replicas $ds --protocol root | grep xcache_${dat}_${1}.dat | awk '{print $12}')
+fp=$(rucio list-file-replicas $ds --protocol root | grep 'atlaslocalgroupdisk' | awk '{print $12}')
 echo "to read $fp"
 
 while read serv; do
