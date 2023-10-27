@@ -9,9 +9,14 @@ voms-proxy-init --pwstdin -key /etc/grid-certs/userkey.pem \
 voms-proxy-info
 
 export X509_USER_PROXY=/tmp/x509up_u0
+echo 'creating dataset'
+
+fd=$(date +'%Y-%m-%d')
+./create_dataset.sh
 
 echo 'start reading'
 
 export PYTHONUNBUFFERED=TRUE
 python3.6 xcache-tester.py
 
+# to debug

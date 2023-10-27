@@ -4,8 +4,10 @@
 # xcache_open => xopen_
 # xcahe_read => xread_
 
+# import rucio.client.didclient as dc
+import rucio.client.replicaclient as rc
+from rucio.client import Client
 import sys
-import subprocess
 import datetime
 import time
 # from alerts import alarms
@@ -24,6 +26,13 @@ procs = []
 results = 0
 
 
+rucio_client = Client()
+rucio_client.ping()
+
+# did_client = dc.DIDClient()
+rep_client = rc.ReplicaClient()
+
+
 def addStatus(doc, step, status):
     doc[step+'ok'] = status.ok
     doc[step+'error'] = status.error
@@ -31,16 +40,6 @@ def addStatus(doc, step, status):
     doc[step+'message'] = status.message
     doc[step+'status'] = status.status
     doc[step+'code'] = status.code
-
-
-def expunge(server):
-    nfp = '/atlas/rucio/user/ivukotic/7d/9b/xcache.test.dat'
-    cp = subprocess.run(["xrdfs", server, "cache", "fevict", nfp], capture_output=True)
-    if cp.returncode:
-        print('issue cleaning cached file for server:', server)
-        print('out:', cp.stdout)
-        print('err:', cp.stderr)
-    return cp.returncode
 
 
 def stater(i, q, r):
@@ -59,8 +58,6 @@ def stater(i, q, r):
         o = op[:op.index('//', 10)]  # or 11?
         p = op[op.index('//', 10):]
 
-        # expunging from xcache
-        expunge(doc['server'])
         # print("opening and reading through xcache")
 
         try:
@@ -170,7 +167,7 @@ if __name__ == "__main__":
         config = json.load(json_data,)
 
     es = Elasticsearch(
-        hosts=[{'host': config['ES_HOST'], 'port': 9200, 'scheme': 'https'}],
+        hosts=[{'host': config['ES_HOST'], 'port':9200, 'scheme':'https'}],
         basic_auth=(config['ES_USER'], config['ES_PASS']))
     es.options(request_timeout=60)
 
@@ -179,6 +176,8 @@ if __name__ == "__main__":
     else:
         print('no connection to ES.')
         sys.exit(1)
+
+    cd = datetime.datetime.utcnow().strftime('%Y-%m-%d')
 
     q = Queue()  # a queue for files to retry
     r = Queue()  # a queue for results
@@ -189,25 +188,34 @@ if __name__ == "__main__":
         p.start()
         procs.append(p)
 
-    fp = 'root://fax.mwt2.org:1094//pnfs/uchicago.edu/atlaslocalgroupdisk/rucio/user/ivukotic/7d/9b/xcache.test.dat'
-    cd = datetime.datetime.utcnow().strftime('%Y-%m-%d')
-    print('starting at:', cd)
+    for fi in range(1, 288):
 
-    servers = get_active_xcaches()
+        servers = get_active_xcaches()
 
-    origin_readable = checkOrigin(fp)
+        scope = 'user.ivukotic'
+        name = 'xcache_' + cd + '_' + str(fi)+'.dat'
+        print('reading file:', scope, name, flush=True)
 
-    if origin_readable:
-        for server in servers:
-            q.put({
-                'site': server['site'],
-                'server_id': server['id'],
-                'server': server['address'],
-                'fp': fp
-            })
+        try:
+            fps = list(rep_client.list_replicas(dids=[{'scope': scope, 'name': name}]))
+            fp = list(fps[0]['pfns'].keys())[0]
+        except Exception as e:
+            print("exception. bailing out", e)
+            sys.exit(24)
 
-    time.sleep(300)
-    simple_store(r)
+        origin_readable = checkOrigin(fp)
+
+        if origin_readable:
+            for server in servers:
+                q.put({
+                    'site': server['site'],
+                    'server_id': server['id'],
+                    'server': server['address'],
+                    'fp': fp
+                })
+
+        time.sleep(300)
+        simple_store(r)
 
     q.put(None)
 
