@@ -195,14 +195,18 @@ if __name__ == "__main__":
 
     origin_readable = checkOrigin(fp)
 
-    if origin_readable:
-        for server in servers:
-            q.put({
-                'site': server['site'],
-                'server_id': server['id'],
-                'server': server['address'],
-                'fp': fp
-            })
+    if not origin_readable:
+        print('Test file issue. Quiting after an hour of sleep')
+        time.sleep(3600)
+        sys.exit(1)
+
+    for server in servers:
+        q.put({
+            'site': server['site'],
+            'server_id': server['id'],
+            'server': server['address'],
+            'fp': fp
+        })
 
     time.sleep(300)
     simple_store(r)

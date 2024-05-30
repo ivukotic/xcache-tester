@@ -53,5 +53,5 @@ spec:
                 name: rucio-config
             - name: config
               secret:
-                name: config
+                secretName: config
           restartPolicy: OnFailure
