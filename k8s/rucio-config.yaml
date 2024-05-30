@@ -3,10 +3,12 @@ data:
   rucio.cfg: |
     [client]
     rucio_host = https://voatlasrucio-server-prod.cern.ch:443
-    auth_host = https://atlas-rucio-auth.cern.ch:443
+    auth_host = https://atlas-rucio-auth.cern.ch:443    
     auth_type = x509_proxy
     ca_cert = /etc/pki/tls/certs/ca-bundle.crt
     account = ivukotic
+    client_cert = /etc/grid-certs/usercert.pem
+    client_key = /etc/grid-certs/userkey.pem
     client_x509_proxy = $X509_USER_PROXY
     request_retries = 3
 

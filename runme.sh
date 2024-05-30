@@ -1,9 +1,8 @@
 #!/bin/bash
 
-voms-proxy-init --pwstdin -key /etc/grid-certs/userkey.pem \
-                  -cert /etc/grid-certs/usercert.pem \
-                  --voms=atlas \
-                  -valid "25:00" \
+voms-proxy-init --pwstdin --key /etc/grid-certs/userkey.pem \
+                  --cert /etc/grid-certs/usercert.pem \
+                  --valid "25:00" \
                   <  /etc/grid-certs-ro/passphrase
 
 voms-proxy-info
