@@ -14,5 +14,5 @@ export X509_USER_PROXY=/tmp/x509up_u0
 echo 'start reading'
 
 export PYTHONUNBUFFERED=TRUE
-python3.6 xcache-tester.py
+python3 xcache-tester.py
 
