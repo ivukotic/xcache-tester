@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: rucio-sleeper
+spec:
+  containers:
+    - name: rucio-client
+      image: sslhep/rucio-client:main
+      command: ["sleep", "3600"]
