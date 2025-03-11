@@ -1,13 +1,13 @@
 #!/bin/bash
 
-voms-proxy-init --pwstdin -key /etc/grid-certs/userkey.pem \
+voms-proxy-init3 --pwstdin -key /etc/grid-certs/userkey.pem \
                   -cert /etc/grid-certs/usercert.pem \
                   -voms atlas \
-                  -vomses vomses \
+                #   -vomses vomses \
                   -valid "25:00" \
                   <  /etc/grid-certs-ro/passphrase
 
-voms-proxy-info
+voms-proxy-info3
 
 export X509_USER_PROXY=/tmp/x509up_u0
 
