@@ -1,6 +1,6 @@
 FROM sslhep/rucio-client:2025-03-update
 
-RUN rm -f /usr/bin/python3 && ln -s /usr/bin/python3.6 /usr/bin/python3
+# RUN rm -f /usr/bin/python3 && ln -s /usr/bin/python3.6 /usr/bin/python3
 RUN yum update -y && yum install -y jq xrootd-client python3-gfal2 gfal2-all gfal2-util-scripts python3-gfal2-util
 
 # for future development - python client running instead of xrdcp.  
