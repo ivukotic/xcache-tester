@@ -157,7 +157,7 @@ def get_active_xcaches():
                 continue
             # if server['address'] == '163.1.5.200':
             #     print('OX non VP. skip.', flush=True)
-                continue
+            #     continue
             toTest.append(server)
     return toTest
 
