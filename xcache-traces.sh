@@ -1,6 +1,5 @@
 #!/bin/bash
 date
-#!/bin/bash
 
 voms-proxy-init3 --pwstdin -voms atlas \
                 -key /etc/grid-certs/userkey.pem \

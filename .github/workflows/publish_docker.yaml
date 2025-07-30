@@ -14,7 +14,7 @@ jobs:
         uses: actions/checkout@v4.2.2
 
       - name: Docker Build & Push to DockerHub
-        uses: mr-smithers-excellent/docker-build-push@v6.4
+        uses: mr-smithers-excellent/docker-build-push@v6.5
         with:
           image: ivukotic/xcache-tester
           tags: latest, ${{ github.sha }}
@@ -23,7 +23,7 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD }}
 
       # - name: Docker Build & Push to Harbor
-      #   uses: mr-smithers-excellent/docker-build-push@v6.4
+      #   uses: mr-smithers-excellent/docker-build-push@v6.5
       #   with:
       #     image: atlas/xcache-tester
       #     tags: latest, ${{ github.sha }}
