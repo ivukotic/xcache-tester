@@ -41,42 +41,30 @@ def expunge(server):
     return cp.returncode
 
 
-def stater(i, q, r):
-    while True:
-        if q.empty():
-            time.sleep(1)
-            continue
-        doc = q.get()
-        if doc is None:
-            print('this thread done. breaking out', flush=True)
-            q.put(None)
-            break
-        # print(f'thr:{i}, checking {doc}')
-        c = 'root://' + doc['server']
-        op = doc['fp']
-        o = op[:op.index('//', 10)]  # or 11?
-        p = op[op.index('//', 10):]
+def test_server(doc, r):
+    # Runs in its own subprocess so all XRootD TCP connections are closed on exit,
+    # signalling xcache to close its origin connections.
+    c = 'root://' + doc['server']
+    op = doc['fp']
+    o = op[:op.index('//', 10)]
+    p = op[op.index('//', 10):]
 
-        # expunging from xcache
-        expunge(doc['server'])
-        # print("opening and reading through xcache")
+    expunge(doc['server'])
 
-        try:
-            with client.File() as f:
-                print(f'thr:{i}, {c}//{op}', flush=True)
-                xostatus, nothing = f.open(c+'//'+o+p, timeout=5)
-                print(f'thr:{i} xopen: {xostatus}', flush=True)
-                addStatus(doc, 'xopen_', xostatus)
-                if xostatus.ok:
-                    xrstatus, data = f.read(offset=0, size=1024, timeout=10)
-                    print(f'thr:{i} xread: {xrstatus}', flush=True)
-                    addStatus(doc, 'xread_', xrstatus)
-        except Exception as e:
-            print('issue reading file from xcache.', e, flush=True)
+    try:
+        with client.File() as f:
+            print(f'checking {c}//{op}', flush=True)
+            xostatus, nothing = f.open(c+'//'+o+p, timeout=5)
+            print(f'xopen: {xostatus}', flush=True)
+            addStatus(doc, 'xopen_', xostatus)
+            if xostatus.ok:
+                xrstatus, data = f.read(offset=0, size=1024, timeout=10)
+                print(f'xread: {xrstatus}', flush=True)
+                addStatus(doc, 'xread_', xrstatus)
+    except Exception as e:
+        print('issue reading file from xcache.', e, flush=True)
 
-        r.put(doc, block=True, timeout=0.1)
-
-    print(f'thr:{i} done.', flush=True)
+    r.put(doc)
 
 
 def checkOrigin(fp):
@@ -178,17 +166,10 @@ if __name__ == "__main__":
         print('no connection to ES.')
         sys.exit(1)
 
-    q = Queue()  # a queue for files to retry
     r = Queue()  # a queue for results
 
-    # creates processes that will do transfers
-    for i in range(nproc):
-        p = Process(target=stater, args=(i, q, r), daemon=True)
-        p.start()
-        procs.append(p)
-
     fp = 'root://fax.mwt2.org:1094//pnfs/uchicago.edu/atlaslocalgroupdisk/rucio/user/ivukotic/7d/9b/xcache.test.dat'
-    cd = datetime.datetime.utcnow().strftime('%Y-%m-%d')
+    cd = datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%d')
     print('starting at:', cd)
 
     servers = get_active_xcaches()
@@ -200,22 +181,26 @@ if __name__ == "__main__":
         time.sleep(3600)
         sys.exit(1)
 
+    # Spawn one process per server so XRootD connections are closed on process exit,
+    # preventing xcache from keeping stale connections to origin servers.
     for server in servers:
-        q.put({
+        doc = {
             'site': server['site'],
             'server_id': server['id'],
             'server': server['address'],
             'fp': fp
-        })
+        }
+        p = Process(target=test_server, args=(doc, r), daemon=True)
+        p.start()
+        procs.append(p)
 
-    time.sleep(300)
-    simple_store(r)
+        # Throttle: keep at most nproc tests running concurrently
+        while sum(1 for proc in procs if proc.is_alive()) >= nproc:
+            time.sleep(1)
 
-    q.put(None)
-
-    print("wait for the queue to be fully processed (up to 10 min.)", flush=True)
-    for i in range(nproc):
-        procs[i].join(600)
+    print("wait for all server tests to finish (up to 10 min.)", flush=True)
+    for p in procs:
+        p.join(600)
 
     simple_store(r)
 
