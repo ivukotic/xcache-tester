@@ -11,17 +11,17 @@ jobs:
     name: build
     steps:
       - name: Checkout
-        uses: actions/checkout@v4.2.2
+        uses: actions/checkout@v6
 
       - name: Log in to DockerHub
-        uses: docker/login-action@v3.4.0
+        uses: docker/login-action@v4
         with:
           registry: docker.io
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
       - name: Docker Build & Push to DockerHub
-        uses: docker/build-push-action@v6.18.0
+        uses: docker/build-push-action@v7
         with:
           context: .
           push: true
@@ -30,14 +30,14 @@ jobs:
             ivukotic/xcache-tester:${{ github.sha }}
 
       # - name: Log in to Harbor
-      #   uses: docker/login-action@v3.4.0
+      #   uses: docker/login-action@v4
       #   with:
       #     registry: hub.opensciencegrid.org
       #     username: ${{ secrets.HARBOR_USERNAME }}
       #     password: ${{ secrets.HARBOR_PASSWORD }}
 
       # - name: Docker Build & Push to Harbor
-      #   uses: docker/build-push-action@v6.18.0
+      #   uses: docker/build-push-action@v7
       #   with:
       #     context: .
       #     push: true
@@ -46,7 +46,7 @@ jobs:
       #       hub.opensciencegrid.org/atlas/xcache-tester:${{ github.sha }}
 
       - name: Repository Dispatch
-        uses: peter-evans/repository-dispatch@v3.0.0
+        uses: peter-evans/repository-dispatch@v4
         with:
           token: ${{ secrets.AAAS_GITOPS_DEPLOY_TRIGGER }}
           repository: maniaclab/flux_apps
