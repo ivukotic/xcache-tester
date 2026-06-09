@@ -35,10 +35,14 @@ def addStatus(doc, step, status):
 
 def expunge(server):
     nfp = '/atlas/rucio/user/ivukotic/7d/9b/xcache.test.dat'
-    cp = subprocess.run(["xrdfs", server, "cache", "fevict", nfp])
-    if cp.returncode:
-        print('issue cleaning cached file for server:', server)
-    return cp.returncode
+    try:
+        cp = subprocess.run(["xrdfs", server, "cache", "fevict", nfp], timeout=30)
+        if cp.returncode:
+            print('issue cleaning cached file for server:', server)
+        return cp.returncode
+    except subprocess.TimeoutExpired:
+        print(f'expunge timed out for server: {server}', flush=True)
+        return 1
 
 
 def test_server(doc, r):
@@ -133,7 +137,7 @@ def simple_store(r):
 
 
 def get_active_xcaches():
-    res = requests.get('https://vps.cern.ch/liveness')
+    res = requests.get('https://vps.cern.ch/liveness', timeout=30)
     jdoc = res.json()
     toTest = []
     for site in jdoc.values():
@@ -199,8 +203,16 @@ if __name__ == "__main__":
             time.sleep(1)
 
     print("wait for all server tests to finish (up to 10 min.)", flush=True)
+    deadline = time.time() + 600
     for p in procs:
-        p.join(600)
+        remaining = deadline - time.time()
+        if remaining <= 0:
+            break
+        p.join(remaining)
+    for p in procs:
+        if p.is_alive():
+            print(f'terminating hung process {p.pid}', flush=True)
+            p.terminate()
 
     simple_store(r)
 
