@@ -215,6 +215,8 @@ if __name__ == "__main__":
             p.terminate()
 
     simple_store(r)
+    r.close()
+    r.cancel_join_thread()
 
     print("Done testing.", flush=True)
 
