@@ -36,7 +36,8 @@ def addStatus(doc, step, status):
 def expunge(server):
     nfp = '/atlas/rucio/user/ivukotic/7d/9b/xcache.test.dat'
     try:
-        cp = subprocess.run(["xrdfs", server, "cache", "fevict", nfp], timeout=30)
+        cp = subprocess.run(
+            ["xrdfs", server, "cache", "fevict", nfp], timeout=30)
         if cp.returncode:
             print('issue cleaning cached file for server:', server)
         return cp.returncode
@@ -172,7 +173,8 @@ if __name__ == "__main__":
 
     r = Queue()  # a queue for results
 
-    fp = 'root://fax.mwt2.org:1094//pnfs/uchicago.edu/atlaslocalgroupdisk/rucio/user/ivukotic/7d/9b/xcache.test.dat'
+    # fp = 'root://fax.mwt2.org:1094//pnfs/uchicago.edu/atlaslocalgroupdisk/rucio/user/ivukotic/7d/9b/xcache.test.dat'
+    fp = 'root://dcgftp.usatlas.bnl.gov:1094//pnfs/usatlas.bnl.gov/LOCALGROUPDISK/rucio/user/ivukotic/7d/9b/xcache.test.dat'
     cd = datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%d')
     print('starting at:', cd)
 
