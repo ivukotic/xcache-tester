@@ -175,6 +175,8 @@ if __name__ == "__main__":
 
     # fp = 'root://fax.mwt2.org:1094//pnfs/uchicago.edu/atlaslocalgroupdisk/rucio/user/ivukotic/7d/9b/xcache.test.dat'
     fp = 'root://dcgftp.usatlas.bnl.gov:1094//pnfs/usatlas.bnl.gov/LOCALGROUPDISK/rucio/user/ivukotic/7d/9b/xcache.test.dat'
+    fp = 'root://xrootd.aglt2.org:1094//atlaslocalgroupdisk/rucio/user/ivukotic/7d/9b/xcache.test.dat'
+    fp = 'root://xrootd.data.net2.mghpcc.org:1094//atlaslocalgroupdisk/rucio/user/ivukotic/7d/9b/xcache.test.dat'
     cd = datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%d')
     print('starting at:', cd)
 
