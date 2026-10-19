@@ -3,6 +3,7 @@
 # status:
 # xcache_open => xopen_
 # xcahe_read => xread_
+# cache fevict before the test => expunge_ok, expunge_message
 # origin (written only when the origin check fails) => origin_ok, origin_version, ostat_, oopen_, oread_
 
 import sys
@@ -34,17 +35,23 @@ def addStatus(doc, step, status):
     doc[step+'code'] = status.code
 
 
-def expunge(server):
+def expunge(doc, tag):
+    # Fills doc with expunge_ok/expunge_message.
     nfp = '/atlas/rucio/user/ivukotic/7d/9b/xcache.test.dat'
     try:
         cp = subprocess.run(
-            ["xrdfs", server, "cache", "fevict", nfp], timeout=30)
+            ["xrdfs", doc['server'], "cache", "fevict", nfp],
+            capture_output=True, text=True, timeout=30)
+        doc['expunge_ok'] = cp.returncode == 0
         if cp.returncode:
-            print('issue cleaning cached file for server:', server)
-        return cp.returncode
+            doc['expunge_message'] = (cp.stderr or cp.stdout).strip()
     except subprocess.TimeoutExpired:
-        print(f'expunge timed out for server: {server}', flush=True)
-        return 1
+        doc['expunge_ok'] = False
+        doc['expunge_message'] = 'timed out after 30s'
+    if doc['expunge_ok']:
+        print(f'{tag} expunge: OK', flush=True)
+    else:
+        print(f'{tag} expunge: FAILED {doc["expunge_message"]}', flush=True)
 
 
 def test_server(doc, r):
@@ -54,21 +61,22 @@ def test_server(doc, r):
     op = doc['fp']
     o = op[:op.index('//', 10)]
     p = op[op.index('//', 10):]
+    tag = f"[{doc['site']} {doc['server']}]"
 
-    expunge(doc['server'])
+    expunge(doc, tag)
 
     try:
         with client.File() as f:
-            print(f'checking {c}//{op}', flush=True)
+            print(f'{tag} checking {c}//{op}', flush=True)
             xostatus, nothing = f.open(c+'//'+o+p, timeout=5)
-            print(f'xopen: {xostatus}', flush=True)
+            print(f'{tag} xopen: {xostatus}', flush=True)
             addStatus(doc, 'xopen_', xostatus)
             if xostatus.ok:
                 xrstatus, data = f.read(offset=0, size=1024, timeout=10)
-                print(f'xread: {xrstatus}', flush=True)
+                print(f'{tag} xread: {xrstatus}', flush=True)
                 addStatus(doc, 'xread_', xrstatus)
     except Exception as e:
-        print('issue reading file from xcache.', e, flush=True)
+        print(f'{tag} issue reading file from xcache.', e, flush=True)
 
     r.put(doc)
 
@@ -155,6 +163,24 @@ def simple_store(docs):
     except Exception as e:
         print('Something seriously wrong happened.', e, flush=True)
     print('done storing.', flush=True)
+
+
+def print_summary(docs):
+    def step(doc, name):
+        if name + 'ok' not in doc:
+            return '-'
+        return 'OK' if doc[name + 'ok'] else 'FAIL'
+
+    print(f'{"site":<20} {"server":<40} {"expunge":<8} {"open":<5} {"read":<5} message', flush=True)
+    for doc in sorted(docs, key=lambda d: (d['site'], d['server'])):
+        message = ''
+        for name in ('xread_', 'xopen_'):
+            if doc.get(name + 'ok') is False:
+                message = doc.get(name + 'message', '')
+        print(f'{doc["site"]:<20} {doc["server"]:<40} {step(doc, "expunge_"):<8} '
+              f'{step(doc, "xopen_"):<5} {step(doc, "xread_"):<5} {message.strip()}', flush=True)
+    ok = sum(1 for d in docs if d.get('xread_ok'))
+    print(f'servers OK: {ok}/{len(docs)}', flush=True)
 
 
 def get_active_xcaches():
@@ -276,6 +302,7 @@ if __name__ == "__main__":
         doc['xopen_message'] = msg
         docs.append(doc)
 
+    print_summary(docs)
     simple_store(docs)
     r.close()
     r.cancel_join_thread()
