@@ -3,7 +3,7 @@
 # status:
 # xcache_open => xopen_
 # xcahe_read => xread_
-# origin (written only when the origin check fails) => origin_ok, ostat_, oopen_, oread_
+# origin (written only when the origin check fails) => origin_ok, origin_version, ostat_, oopen_, oread_
 
 import sys
 import subprocess
@@ -15,6 +15,7 @@ import json
 import requests
 from multiprocessing import Process, Queue
 from XRootD import client
+from XRootD.client.flags import QueryCode
 
 import faulthandler
 import signal
@@ -79,10 +80,22 @@ def checkOrigin(doc):
     p = fp[fp.index('//', 10):]
     doc['origin_ok'] = False
     print("---", datetime.datetime.now(), "---")
+    myclient = client.FileSystem(o)
+
+    # best effort: needs a successful login, so it fails the same way as stat on auth problems
+    try:
+        vstatus, version = myclient.query(QueryCode.CONFIG, 'version', timeout=5)
+        if vstatus.ok:
+            doc['origin_version'] = version.decode(errors='replace').strip()
+            print(f'origin version: {doc["origin_version"]}', flush=True)
+        else:
+            print(f'origin version query failed: {vstatus}', flush=True)
+    except Exception as e:
+        print('issue querying origin version.', e, flush=True)
+
     print("stating origin", flush=True)
 
     try:
-        myclient = client.FileSystem(o)
         status, statInfo = myclient.stat(p, timeout=5)
         print(f'origin stat:{status}', flush=True)  # , statInfo)
         addStatus(doc, 'ostat_', status)
