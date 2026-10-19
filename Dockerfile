@@ -6,13 +6,13 @@ RUN yum install -y cmake gcc gcc-c++ zlib-devel python3-devel libuuid-devel open
 
 RUN pip3 install --upgrade argcomplete rucio-clients
 RUN pip3 install wheel
-RUN pip3 install xrootd
+RUN pip3 install xrootd==5.9.7
 RUN pip3 install elasticsearch
 
 RUN python3 --version && \
     python3 -c "import XRootD; print('python xrootd', getattr(XRootD, '__version__', 'unknown'), XRootD.__file__)" && \
     pip3 show xrootd | grep -i '^version' && \
-    xrdfs --version && \
+    xrdcp --version && \
     rpm -qa | grep -i xrootd
 
 COPY xcache-traces.py ./

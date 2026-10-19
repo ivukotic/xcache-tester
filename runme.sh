@@ -4,7 +4,7 @@ echo '--- versions ---'
 python3 --version
 python3 -c "import XRootD; print('python xrootd', getattr(XRootD, '__version__', 'unknown'), XRootD.__file__)"
 pip3 show xrootd | grep -i '^version'
-xrdfs --version
+xrdcp --version
 rpm -qa | grep -i xrootd
 echo '----------------'
 
