@@ -3,6 +3,7 @@
 # status:
 # xcache_open => xopen_
 # xcahe_read => xread_
+# origin (written only when the origin check fails) => origin_ok, ostat_, oopen_, oread_
 
 import sys
 import subprocess
@@ -20,8 +21,7 @@ import signal
 faulthandler.register(signal.SIGUSR1.value)
 
 nproc = 5
-procs = []
-results = 0
+procs = []  # (doc, Process)
 
 
 def addStatus(doc, step, status):
@@ -72,10 +72,12 @@ def test_server(doc, r):
     r.put(doc)
 
 
-def checkOrigin(fp):
-
+def checkOrigin(doc):
+    # Fills doc with ostat_/oopen_/oread_ statuses and origin_ok; returns origin_ok.
+    fp = doc['fp']
     o = fp[:fp.index('//', 10)]
     p = fp[fp.index('//', 10):]
+    doc['origin_ok'] = False
     print("---", datetime.datetime.now(), "---")
     print("stating origin", flush=True)
 
@@ -83,8 +85,10 @@ def checkOrigin(fp):
         myclient = client.FileSystem(o)
         status, statInfo = myclient.stat(p, timeout=5)
         print(f'origin stat:{status}', flush=True)  # , statInfo)
+        addStatus(doc, 'ostat_', status)
     except Exception as e:
         print('issue stating file.', e, flush=True)
+        doc['origin_message'] = f'stat exception: {e}'
         return False
 
     if not status.ok:
@@ -97,24 +101,27 @@ def checkOrigin(fp):
             print("opening:", fp, flush=True)
             ostatus, nothing = f.open(fp, timeout=5)
             print(f'open: {ostatus}', flush=True)
+            addStatus(doc, 'oopen_', ostatus)
             if ostatus.ok:
                 rstatus, data = f.read(offset=0, size=1024, timeout=10)
                 print(f'read: {rstatus}', flush=True)
+                addStatus(doc, 'oread_', rstatus)
     except Exception as e:
         print('issue reading file from origin.', e, flush=True)
+        doc['origin_message'] = f'open/read exception: {e}'
         return False
 
     if not ostatus.ok or not rstatus.ok:
         return False
 
+    doc['origin_ok'] = True
     return True
 
 
-def simple_store(r):
-    print("storring results.", flush=True)
+def simple_store(docs):
+    print("storing results.", flush=True)
     allDocs = []
-    while not r.empty():
-        doc = r.get()
+    for doc in docs:
         doc['_index'] = "remote_io_retries"
         doc['timestamp'] = int(time.time()*1000)
         allDocs.append(doc)
@@ -129,9 +136,9 @@ def simple_store(r):
     except es_exceptions.TransportError as e:
         print('TransportError ', e, flush=True)
     except helpers.BulkIndexError as e:
-        print(e[0], flush=True)
-        for i in e[1]:
-            print(i, flush=True)
+        print(e, flush=True)
+        for err in e.errors:
+            print(err, flush=True)
     except Exception as e:
         print('Something seriously wrong happened.', e, flush=True)
     print('done storing.', flush=True)
@@ -162,8 +169,7 @@ if __name__ == "__main__":
 
     es = Elasticsearch(
         hosts=[{'host': config['ES_HOST'], 'port': 9200, 'scheme': 'https'}],
-        basic_auth=(config['ES_USER'], config['ES_PASS']))
-    es.options(request_timeout=60)
+        basic_auth=(config['ES_USER'], config['ES_PASS'])).options(request_timeout=60)
 
     if es.ping():
         print('connected to ES.')
@@ -173,21 +179,38 @@ if __name__ == "__main__":
 
     r = Queue()  # a queue for results
 
-    # fp = 'root://fax.mwt2.org:1094//pnfs/uchicago.edu/atlaslocalgroupdisk/rucio/user/ivukotic/7d/9b/xcache.test.dat'
-    fp = 'root://dcgftp.usatlas.bnl.gov:1094//pnfs/usatlas.bnl.gov/LOCALGROUPDISK/rucio/user/ivukotic/7d/9b/xcache.test.dat'
-    fp = 'root://xrootd.aglt2.org:1094//atlaslocalgroupdisk/rucio/user/ivukotic/7d/9b/xcache.test.dat'
-    fp = 'root://xrootd.data.net2.mghpcc.org:1094//atlaslocalgroupdisk/rucio/user/ivukotic/7d/9b/xcache.test.dat'
+    # Origins holding the test file, in order of preference. The first one that
+    # passes checkOrigin is used for all xcache tests.
+    origins = [
+        'root://xrootd.aglt2.org:1094//atlaslocalgroupdisk/rucio/user/ivukotic/7d/9b/xcache.test.dat',
+        'root://xrootd.data.net2.mghpcc.org:1094//atlaslocalgroupdisk/rucio/user/ivukotic/7d/9b/xcache.test.dat',
+        'root://dcgftp.usatlas.bnl.gov:1094//pnfs/usatlas.bnl.gov/LOCALGROUPDISK/rucio/user/ivukotic/7d/9b/xcache.test.dat',
+        'root://fax.mwt2.org:1094//pnfs/uchicago.edu/atlaslocalgroupdisk/rucio/user/ivukotic/7d/9b/xcache.test.dat',
+    ]
     cd = datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%d')
     print('starting at:', cd)
 
     servers = get_active_xcaches()
 
-    origin_readable = checkOrigin(fp)
+    fp = None
+    failed_origins = []
+    for candidate in origins:
+        origin_doc = {'fp': candidate}
+        if checkOrigin(origin_doc):
+            fp = candidate
+            break
+        print(f'origin failed, trying next one: {candidate}', flush=True)
+        failed_origins.append(origin_doc)
 
-    if not origin_readable:
-        print('Test file issue. Quiting after an hour of sleep')
+    # record origin failures so they are visible in ES, not just in pod logs
+    if failed_origins:
+        simple_store(failed_origins)
+
+    if fp is None:
+        print('Test file issue on all origins. Quitting after an hour of sleep')
         time.sleep(3600)
         sys.exit(1)
+    print('using origin:', fp, flush=True)
 
     # Spawn one process per server so XRootD connections are closed on process exit,
     # preventing xcache from keeping stale connections to origin servers.
@@ -200,25 +223,47 @@ if __name__ == "__main__":
         }
         p = Process(target=test_server, args=(doc, r), daemon=True)
         p.start()
-        procs.append(p)
+        procs.append((doc, p))
 
         # Throttle: keep at most nproc tests running concurrently
-        while sum(1 for proc in procs if proc.is_alive()) >= nproc:
+        while sum(1 for _, proc in procs if proc.is_alive()) >= nproc:
             time.sleep(1)
 
     print("wait for all server tests to finish (up to 10 min.)", flush=True)
     deadline = time.time() + 600
-    for p in procs:
+    for _, p in procs:
         remaining = deadline - time.time()
         if remaining <= 0:
             break
         p.join(remaining)
-    for p in procs:
+    hung = set()
+    for doc, p in procs:
         if p.is_alive():
-            print(f'terminating hung process {p.pid}', flush=True)
+            print(f'terminating hung process {p.pid} ({doc["server"]})', flush=True)
+            hung.add(id(doc))
             p.terminate()
+            p.join(5)
 
-    simple_store(r)
+    docs = []
+    while not r.empty():
+        docs.append(r.get())
+
+    # Servers whose test never reported (hung and killed, or crashed) are failures too.
+    reported = {(d['server_id'], d['server']) for d in docs}
+    for doc, p in procs:
+        if (doc['server_id'], doc['server']) in reported:
+            continue
+        if id(doc) in hung:
+            msg = 'test did not finish within 600s; process terminated'
+        else:
+            msg = f'test process exited without reporting (exitcode {p.exitcode})'
+        print(f'{doc["server"]}: {msg}', flush=True)
+        doc['xopen_ok'] = False
+        doc['xopen_error'] = True
+        doc['xopen_message'] = msg
+        docs.append(doc)
+
+    simple_store(docs)
     r.close()
     r.cancel_join_thread()
 
