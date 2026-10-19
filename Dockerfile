@@ -9,6 +9,12 @@ RUN pip3 install wheel
 RUN pip3 install xrootd
 RUN pip3 install elasticsearch
 
+RUN python3 --version && \
+    python3 -c "import XRootD; print('python xrootd', getattr(XRootD, '__version__', 'unknown'), XRootD.__file__)" && \
+    pip3 show xrootd | grep -i '^version' && \
+    xrdfs --version && \
+    rpm -qa | grep -i xrootd
+
 COPY xcache-traces.py ./
 COPY xcache-tester.py ./
 
