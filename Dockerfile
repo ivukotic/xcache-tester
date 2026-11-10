@@ -1,17 +1,27 @@
 FROM sslhep/rucio-client:main
 
-RUN yum update -y && yum install -y jq xrootd-client python3-gfal2 gfal2-all gfal2-util-scripts python3-gfal2-util
+ARG XROOTD_VERSION=6.2.1
 
-RUN yum install -y cmake gcc gcc-c++ zlib-devel python3-devel libuuid-devel openssl-devel sudo python3-pip
+# Upstream XRootD repo (OSG only ships 5.9.x in main). priority=1 beats the OSG repos (priority 98).
+RUN printf '%s\n' \
+      '[xrootd-stable]' \
+      'name=XRootD Stable Repository' \
+      'baseurl=https://xrootd.web.cern.ch/repo/stable/el$releasever/$basearch' \
+      'gpgcheck=1' \
+      'gpgkey=https://xrootd.web.cern.ch/repo/RPM-GPG-KEY.txt' \
+      'enabled=1' \
+      'priority=1' \
+      > /etc/yum.repos.d/xrootd-stable.repo
 
-RUN pip3 install --upgrade argcomplete rucio-clients
-RUN pip3 install wheel
-RUN pip3 install xrootd==6.2.1
-RUN pip3 install elasticsearch
+RUN yum update -y && \
+    yum install -y jq python3-pip \
+        xrootd-client-${XROOTD_VERSION} python3-xrootd-${XROOTD_VERSION} && \
+    yum clean all
+
+RUN pip3 install --upgrade argcomplete rucio-clients elasticsearch
 
 RUN python3 --version && \
-    python3 -c "import XRootD; print('python xrootd', getattr(XRootD, '__version__', 'unknown'), XRootD.__file__)" && \
-    pip3 show xrootd | grep -i '^version' && \
+    python3 -c "import XRootD; print('python xrootd', XRootD.__file__)" && \
     xrdcp --version && \
     rpm -qa | grep -i xrootd
 
