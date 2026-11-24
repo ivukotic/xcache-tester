@@ -92,7 +92,8 @@ def checkOrigin(doc):
 
     # best effort: needs a successful login, so it fails the same way as stat on auth problems
     try:
-        vstatus, version = myclient.query(QueryCode.CONFIG, 'version', timeout=5)
+        vstatus, version = myclient.query(
+            QueryCode.CONFIG, 'version', timeout=5)
         if vstatus.ok:
             doc['origin_version'] = version.decode(errors='replace').strip()
             print(f'origin version: {doc["origin_version"]}', flush=True)
@@ -221,10 +222,10 @@ if __name__ == "__main__":
     # Origins holding the test file, in order of preference. The first one that
     # passes checkOrigin is used for all xcache tests.
     origins = [
+        'root://fax.mwt2.org:1094//pnfs/uchicago.edu/atlaslocalgroupdisk/rucio/user/ivukotic/7d/9b/xcache.test.dat',
         'root://xrootd.aglt2.org:1094//atlaslocalgroupdisk/rucio/user/ivukotic/7d/9b/xcache.test.dat',
         'root://xrootd.data.net2.mghpcc.org:1094//atlaslocalgroupdisk/rucio/user/ivukotic/7d/9b/xcache.test.dat',
         'root://dcgftp.usatlas.bnl.gov:1094//pnfs/usatlas.bnl.gov/LOCALGROUPDISK/rucio/user/ivukotic/7d/9b/xcache.test.dat',
-        'root://fax.mwt2.org:1094//pnfs/uchicago.edu/atlaslocalgroupdisk/rucio/user/ivukotic/7d/9b/xcache.test.dat',
     ]
     cd = datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%d')
     print('starting at:', cd)
@@ -278,7 +279,8 @@ if __name__ == "__main__":
     hung = set()
     for doc, p in procs:
         if p.is_alive():
-            print(f'terminating hung process {p.pid} ({doc["server"]})', flush=True)
+            print(
+                f'terminating hung process {p.pid} ({doc["server"]})', flush=True)
             hung.add(id(doc))
             p.terminate()
             p.join(5)
